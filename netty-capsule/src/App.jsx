@@ -1505,7 +1505,7 @@ const EditorModal = () => {
                       <Star size={16} className="group-hover:rotate-180 transition-transform duration-700" /> Developer Credits
                     </h4>
                     <p className="text-base text-neutral-300 leading-relaxed font-serif italic">
-                      "Netty — An emotional digital archive"<br/><br/>
+                      "Netty — A Digital Archive"<br/><br/>
                       Designed and meticulously crafted with love to safely hold onto moments, letters, and the fragments of time that matter most. Built for memories that deserve to last forever.<br/><br/>
                       <span className="text-blue-400 font-sans not-italic text-xs tracking-widest uppercase font-semibold">Developer: CPE-NGG</span>
                     </p>
