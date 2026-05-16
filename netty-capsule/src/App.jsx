@@ -207,16 +207,16 @@ const DEFAULT_VAULT_ENTRIES = [
 ];
 
 const AMBIENT_TRACKS = [
-  { id: 'mysong1', name: 'Married Life (Aylex)', url: 'audio/married-life.mp3' },
-  { id: 'mysong2', name: 'Galaxy in Your Eyes (Aeris)', url: 'audio/galaxy-in-your-eyes.mp3' },
-  { id: 'mysong3', name: 'Sky Clearing (Epic Spectrum)', url: 'audio/sky-clearing.mp3' },
-  { id: 'mysong4', name: 'We Are (Moavii)', url: 'audio/we-are.mp3' },
-  { id: 'mysong5', name: 'Butterflies (Moavii)', url: 'audio/butterflies.mp3' },
-  { id: 'mysong6', name: 'Thoughtful (Pufino)', url: 'audio/thoughtful.mp3' },
-  { id: 'mysong7', name: 'Harmony (Pufino)', url: 'audio/harmony.mp3' },
-  { id: 'mysong8', name: 'Sentimental (Pufino)', url: 'audio/sentimental.mp3' },
-  { id: 'mysong9', name: 'A Sweet Story (Guillermo Guareschi)', url: 'public/audio/a-sweet-story.mp3' },
-  { id: 'mysong10', name: 'Libellule (Guillermo Guareschi)', url: 'public/audio/libellule.mp3' }
+  { id: 'mysong1', name: 'Married Life (Aylex)', url: '/audio/married-life.mp3' },
+  { id: 'mysong2', name: 'Galaxy in Your Eyes (Aeris)', url: '/audio/galaxy-in-your-eyes.mp3' },
+  { id: 'mysong3', name: 'Sky Clearing (Epic Spectrum)', url: '/audio/sky-clearing.mp3' },
+  { id: 'mysong4', name: 'We Are (Moavii)', url: '/audio/we-are.mp3' },
+  { id: 'mysong5', name: 'Butterflies (Moavii)', url: '/audio/butterflies.mp3' },
+  { id: 'mysong6', name: 'Thoughtful (Pufino)', url: '/audio/thoughtful.mp3' },
+  { id: 'mysong7', name: 'Harmony (Pufino)', url: '/audio/harmony.mp3' },
+  { id: 'mysong8', name: 'Sentimental (Pufino)', url: '/audio/sentimental.mp3' },
+  { id: 'mysong9', name: 'A Sweet Story (Guillermo Guareschi)', url: '/audio/a-sweet-story.mp3' },
+  { id: 'mysong10', name: 'Libellule (Guillermo Guareschi)', url: '/audio/libellule.mp3' }
 ];
 
 // --- Zustand Store ---
