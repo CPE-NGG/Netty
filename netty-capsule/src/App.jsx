@@ -1363,9 +1363,14 @@ const MemoryModal = () => {
         >
           <button onClick={() => setActiveMemoryModal(null)} className="absolute top-6 right-6 text-neutral-500 hover:text-white"><X /></button>
           
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex flex-wrap items-center gap-3 mb-8 w-full pr-8">
             <span className="text-xs text-blue-400 uppercase tracking-[0.2em]">{memory.date || "Unknown Date"}</span>
-            <div className="h-px bg-white/10 flex-1" />
+            {memory.tags && memory.tags.filter(Boolean).map((tag, i) => (
+              <span key={`${tag}-${i}`} className="text-[9px] uppercase tracking-wider px-2 py-1 rounded bg-white/5 text-neutral-400">
+                #{tag.replace(/^#/, '')}
+              </span>
+            ))}
+            <div className="h-px bg-white/10 flex-1 min-w-[50px]" />
           </div>
           
           <h2 className="text-4xl font-serif mb-8 text-white leading-tight">{memory.title || "Untitled Memory"}</h2>
