@@ -193,12 +193,12 @@ const DEFAULT_LETTERS = [
 ];
 
 const DEFAULT_VAULT_ENTRIES = [
-  { id: 'v1', entryId: '001', color: 'emerald', text: "We always thought we had more time. It's funny how time only feels real when it's gone." },
-  { id: 'v2', entryId: '002', color: 'purple', text: "Some people are like stars. They burn so bright that the light stays even after they leave." },
+  { id: 'v1', entryId: '001', color: 'blue', text: "We always thought we had more time. It's funny how time only feels real when it's gone." },
+  { id: 'v2', entryId: '002', color: 'blue', text: "Some people are like stars. They burn so bright that the light stays even after they leave." },
   { 
     id: 'v3', 
     entryId: '003', 
-    color: 'rose', 
+    color: 'blue', 
     text: "A memory kept safe in the dark.", 
     mediaType: 'image', 
     mediaUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80', 
@@ -462,6 +462,7 @@ const CityFireworksBackground = () => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
     let particles = [];
@@ -471,8 +472,12 @@ const CityFireworksBackground = () => {
     let moon = { x: 0, y: 0, r: 0 };
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      // Use clientWidth and clientHeight to perfectly map canvas buffer to display size, preventing stretching issues
+      const cw = canvas.clientWidth;
+      const ch = canvas.clientHeight;
+      canvas.width = cw > 0 ? cw : window.innerWidth;
+      canvas.height = ch > 0 ? ch : window.innerHeight;
+      
       generateSky();
       generateCity();
     };
@@ -695,13 +700,13 @@ const CinematicAudioPlayer = () => {
       <audio ref={audioRef} src={audioSrc || undefined} loop volume={volume} muted={isMuted} />
 
       {/* UI Player Dock */}
-      <div className={`fixed bottom-8 left-8 z-50 flex items-center gap-4 transition-all duration-500 ${isAnyModalOpen ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
-        <GlassPanel className="flex items-center gap-4 px-5 py-3 rounded-full hover:bg-white/[0.05] transition-colors border border-white/10 group">
+      <div className={`fixed bottom-4 left-4 md:bottom-8 md:left-8 z-50 flex items-center gap-2 md:gap-4 transition-all duration-500 ${isAnyModalOpen ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
+        <GlassPanel className="flex items-center gap-2 md:gap-4 px-3 py-2 md:px-5 md:py-3 rounded-full hover:bg-white/[0.05] transition-colors border border-white/10 group">
           <button 
             onClick={toggleMute} 
-            className="text-neutral-400 hover:text-blue-400 transition-colors relative"
+            className="text-neutral-400 hover:text-blue-400 transition-colors relative flex items-center justify-center"
           >
-            {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            {isMuted ? <VolumeX size={16} className="md:w-[18px] md:h-[18px]" /> : <Volume2 size={16} className="md:w-[18px] md:h-[18px]" />}
             
             {!isMuted && isPlaying && (
                <motion.div 
@@ -713,16 +718,16 @@ const CinematicAudioPlayer = () => {
           </button>
           
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase tracking-[0.2em] text-blue-500/80 font-semibold">
-              {musicType === 'ambient' ? 'Ambient Resonance' : 'Custom Vault Frequency'}
+            <span className="text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-blue-500/80 font-semibold">
+              {musicType === 'ambient' ? 'Ambient Resonance' : 'Vault Frequency'}
             </span>
-            <span className="text-xs text-neutral-300 truncate max-w-[120px]">
+            <span className="text-[10px] md:text-xs text-neutral-300 truncate max-w-[80px] md:max-w-[120px]">
                {musicType === 'ambient' ? currentAmbient.name : 'Local Custom Track'}
             </span>
           </div>
 
           {!isMuted && isPlaying && (
-            <div className="flex items-end gap-[2px] h-4 ml-2 opacity-60">
+            <div className="flex items-end gap-[2px] h-3 md:h-4 ml-1 md:ml-2 opacity-60">
               {[1,2,3,4].map(i => (
                 <motion.div 
                   key={i}
@@ -1083,9 +1088,9 @@ const VaultView = () => {
         <div className="flex justify-between items-end mb-16 border-b border-white/10 pb-8">
           <div>
             <h2 className="text-4xl md:text-5xl font-light tracking-tighter mb-2 flex items-center gap-4">
-              <Unlock className="text-emerald-500/70" /> The Vault
+              <Unlock className="text-blue-500/70" /> The Vault
             </h2>
-            <p className="text-xs uppercase tracking-widest text-emerald-500/50">Welcome to our deepest memories</p>
+            <p className="text-xs uppercase tracking-widest text-blue-500/50">Welcome to our deepest memories</p>
           </div>
           <button onClick={lockVault} className="text-[10px] bg-white/5 hover:bg-white/10 px-4 py-2 rounded uppercase tracking-widest transition-colors flex items-center gap-2 border border-white/5">
             <Lock size={12}/> Seal Vault
@@ -1099,7 +1104,7 @@ const VaultView = () => {
              </div>
           ) : (
             sortedVaultEntries.map(v => {
-              const theme = vaultColors[v.color] || vaultColors.emerald;
+              const theme = vaultColors[v.color] || vaultColors.blue;
               return (
                 <GlassPanel key={v.id} className={`p-10 rounded-2xl border-l-4 ${theme.border} flex flex-col justify-center min-h-[250px] relative overflow-hidden group`}>
                    <div className="absolute top-0 right-0 p-4 opacity-10 font-mono text-4xl">{v.entryId}</div>
@@ -1283,7 +1288,7 @@ const EditorModal = () => {
                       return timeB - timeA;
                     }).map(m => (
                       <motion.div layout initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3 }} key={m.id} className="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4 group relative">
-                        <button onClick={() => deleteMemory(m.id)} className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-red-500 transition-all"><Trash2 size={16}/></button>
+                        <button onClick={() => deleteMemory(m.id)} className="absolute top-4 right-4 md:top-6 md:right-6 opacity-100 md:opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-all z-20"><Trash2 size={18}/></button>
                         
                         <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-[90%]">
                            <input value={m.date} onChange={e => updateMemory(m.id, {date: e.target.value})} className="bg-transparent text-xs text-blue-400 uppercase tracking-widest border-b border-white/10 pb-1 outline-none md:w-1/3 font-semibold focus:border-blue-500/50" placeholder="Date/Era" />
@@ -1312,12 +1317,14 @@ const EditorModal = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {fragments.map(p => (
-                      <div key={p.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex gap-4 group items-center">
+                      <div key={p.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex gap-4 group items-center relative">
+                        <button onClick={() => deleteFragment(p.id)} className="absolute top-2 right-2 p-2 bg-red-500/10 text-neutral-400 opacity-100 md:opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-500/20 rounded-xl transition-all z-20"><Trash2 size={16}/></button>
+
                         <div className="h-20 w-20 bg-black/50 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-white/5 relative">
                           {p.type === 'video' ? <VideoIcon size={24} className="absolute z-10 text-white/50" /> : null}
                           <img src={p.url} className="w-full h-full object-cover opacity-70" alt="" />
                         </div>
-                        <div className="flex-1 space-y-2">
+                        <div className="flex-1 space-y-2 pr-6">
                            <input 
                               value={p.caption} 
                               onChange={e => updateFragment(p.id, { caption: e.target.value })} 
@@ -1326,7 +1333,6 @@ const EditorModal = () => {
                            />
                            <p className="text-[9px] uppercase text-neutral-600 tracking-wider">Type: {p.type} {p.localId ? '(Local)' : '(URL)'}</p>
                         </div>
-                        <button onClick={() => deleteFragment(p.id)} className="p-3 text-neutral-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"><Trash2 size={16}/></button>
                       </div>
                     ))}
                   </div>
@@ -1344,8 +1350,8 @@ const EditorModal = () => {
                   <AnimatePresence mode="popLayout">
                     {letters.filter(l => !burnedLetters.includes(l.id)).map(l => (
                       <motion.div layout initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3 }} key={l.id} className="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4 group relative">
-                        <button onClick={() => deleteLetter(l.id)} className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-red-500 transition-all"><Trash2 size={16}/></button>
-                        <input ref={el => itemRefs.current[l.id] = el} value={l.title} onChange={e => updateLetter(l.id, { title: e.target.value })} className="bg-black/40 w-full p-3 rounded-lg text-lg font-serif border border-white/5 text-white focus:border-blue-500/50 outline-none" placeholder="Letter Title" />
+                        <button onClick={() => deleteLetter(l.id)} className="absolute top-4 right-4 md:top-6 md:right-6 opacity-100 md:opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-all z-20"><Trash2 size={18}/></button>
+                        <input ref={el => itemRefs.current[l.id] = el} value={l.title} onChange={e => updateLetter(l.id, { title: e.target.value })} className="bg-black/40 w-[90%] md:w-full p-3 rounded-lg text-lg font-serif border border-white/5 text-white focus:border-blue-500/50 outline-none" placeholder="Letter Title" />
                         <textarea value={l.text} onChange={e => updateLetter(l.id, { text: e.target.value })} className="bg-black/40 w-full p-3 rounded-lg text-sm h-32 border border-white/5 text-neutral-300 focus:border-blue-500/50 outline-none resize-none font-serif italic" placeholder="Contents..." />
                       </motion.div>
                     ))}
@@ -1356,39 +1362,28 @@ const EditorModal = () => {
               {activeTab === 'vault' && (
                 <div className="space-y-12">
                   <div className="space-y-6">
-                    <h4 className="text-xs uppercase tracking-widest text-emerald-400 mb-6 flex items-center gap-2"><Unlock size={16} /> Vault Archive Settings</h4>
+                    <h4 className="text-xs uppercase tracking-widest text-blue-400 mb-6 flex items-center gap-2"><Unlock size={16} /> Vault Archive Settings</h4>
                     
                     <button onClick={() => {
                       const newId = `v_${Date.now()}`;
                       const num = String(vaultEntries.length + 1).padStart(3, '0');
-                      addVaultEntry({ id: newId, entryId: num, color: 'emerald', text: "A new hidden thought..." });
+                      addVaultEntry({ id: newId, entryId: num, color: 'blue', text: "A new hidden thought..." });
                       setFocusedItemId(newId);
-                    }} className="w-full py-6 border-2 border-dashed border-emerald-500/20 text-neutral-500 hover:text-emerald-400 hover:border-emerald-500/40 flex items-center justify-center gap-2 rounded-2xl transition-all"><Plus size={18} /> New Vault Entry</button>
+                    }} className="w-full py-6 border-2 border-dashed border-blue-500/20 text-neutral-500 hover:text-blue-400 hover:border-blue-500/40 flex items-center justify-center gap-2 rounded-2xl transition-all"><Plus size={18} /> New Vault Entry</button>
 
                     <AnimatePresence mode="popLayout">
                       {[...vaultEntries].sort((a, b) => (b.entryId || '').localeCompare(a.entryId || '')).map(v => (
                         <motion.div layout initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3 }} key={v.id} className="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4 group relative">
-                          <button onClick={() => deleteVaultEntry(v.id)} className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-red-500 transition-all"><Trash2 size={16}/></button>
+                          <button onClick={() => deleteVaultEntry(v.id)} className="absolute top-4 right-4 md:top-6 md:right-6 opacity-100 md:opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-all z-20"><Trash2 size={18}/></button>
                           
-                          <div className="flex gap-4 items-center w-[85%]">
+                          <div className="flex gap-4 items-center w-full md:w-[85%] pr-10">
                             <input 
                               ref={el => itemRefs.current[v.id] = el} 
                               value={v.entryId} 
                               onChange={e => updateVaultEntry(v.id, { entryId: e.target.value })} 
-                              className="bg-transparent text-xs text-emerald-400 uppercase tracking-widest border-b border-white/10 outline-none w-24 font-mono pb-1 focus:border-emerald-500/50" 
+                              className="bg-transparent text-xs text-blue-400 uppercase tracking-widest border-b border-white/10 outline-none w-24 font-mono pb-1 focus:border-blue-500/50" 
                               placeholder="ID (001)" 
                             />
-                            <select 
-                              value={v.color} 
-                              onChange={e => updateVaultEntry(v.id, { color: e.target.value })} 
-                              className="bg-black/40 text-xs text-neutral-300 uppercase tracking-widest border border-white/10 rounded-md p-2 outline-none focus:border-emerald-500/50"
-                            >
-                              <option value="emerald">Emerald Theme</option>
-                              <option value="purple">Purple Theme</option>
-                              <option value="blue">Blue Theme</option>
-                              <option value="rose">Rose Theme</option>
-                              <option value="amber">Amber Theme</option>
-                            </select>
                           </div>
                           
                           <div className="flex flex-col md:flex-row gap-4 items-start w-full">
@@ -1408,7 +1403,7 @@ const EditorModal = () => {
                                 <input type="file" id={`vfile-${v.id}`} className="hidden" accept="image/*,video/*" onChange={e => {
                                    if(e.target.files?.[0]) uploadVaultMedia(v.id, e.target.files[0]);
                                 }}/>
-                                <button onClick={() => document.getElementById(`vfile-${v.id}`).click()} className="flex flex-col items-center justify-center h-full w-full rounded-lg border border-dashed border-white/20 text-neutral-500 hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all text-[10px] uppercase tracking-widest gap-2">
+                                <button onClick={() => document.getElementById(`vfile-${v.id}`).click()} className="flex flex-col items-center justify-center h-full w-full rounded-lg border border-dashed border-white/20 text-neutral-500 hover:text-blue-400 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-[10px] uppercase tracking-widest gap-2">
                                   <ImageIcon size={20} /> Attach Media
                                 </button>
                               </div>
@@ -1417,7 +1412,7 @@ const EditorModal = () => {
                             <textarea 
                               value={v.text} 
                               onChange={e => updateVaultEntry(v.id, { text: e.target.value })} 
-                              className="bg-black/40 w-full flex-1 p-3 rounded-lg text-lg h-28 border border-white/5 text-neutral-200 focus:border-emerald-500/50 outline-none resize-none font-serif italic custom-scrollbar" 
+                              className="bg-black/40 w-full flex-1 p-3 rounded-lg text-lg h-28 border border-white/5 text-neutral-200 focus:border-blue-500/50 outline-none resize-none font-serif italic custom-scrollbar" 
                               placeholder="Deep vault memory..." 
                             />
                           </div>
@@ -1426,9 +1421,8 @@ const EditorModal = () => {
                     </AnimatePresence>
                   </div>
 
-                  {/* Security Protocol Moved Here per user request */}
                   <section className="bg-white/5 p-8 rounded-3xl border border-white/5">
-                    <h4 className="text-xs uppercase tracking-widest text-emerald-400 mb-6 flex items-center gap-2"><Lock size={16} /> Security Protocol</h4>
+                    <h4 className="text-xs uppercase tracking-widest text-blue-400 mb-6 flex items-center gap-2"><Lock size={16} /> Security Protocol</h4>
                     <div className="flex items-center gap-8">
                       <div>
                         <label className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2 block">Vault Access Code (Default: 1111)</label>
@@ -1437,7 +1431,7 @@ const EditorModal = () => {
                           maxLength={6} 
                           value={vaultPassword} 
                           onChange={e => useStore.setState({ vaultPassword: e.target.value.replace(/\D/g,'') })} 
-                          className="w-32 bg-black/60 border border-white/10 rounded-xl p-3 text-center text-xl tracking-[0.3em] outline-none text-white focus:border-emerald-500/50 transition-colors font-mono"
+                          className="w-32 bg-black/60 border border-white/10 rounded-xl p-3 text-center text-xl tracking-[0.3em] outline-none text-white focus:border-blue-500/50 transition-colors font-mono"
                           placeholder="••••"
                         />
                       </div>
@@ -1478,7 +1472,7 @@ const EditorModal = () => {
                           <span className="text-sm font-semibold text-neutral-300">Browse for audio or video file</span>
                           <span className="text-[10px] text-neutral-500 uppercase tracking-widest mt-1">Saves directly to your browser's vault</span>
                           
-                          {customMusicUrl && <span className="text-[10px] text-emerald-400 mt-4 bg-emerald-400/10 px-3 py-1 rounded-full">Custom Audio Loaded Successfully</span>}
+                          {customMusicUrl && <span className="text-[10px] text-blue-400 mt-4 bg-blue-400/10 px-3 py-1 rounded-full">Custom Audio Loaded Successfully</span>}
                           
                           <input 
                             type="file" 
@@ -1557,10 +1551,10 @@ export default function App() {
     hydrate().then(() => setIsHydrated(true));
   }, [hydrate]);
 
-  if (!isHydrated) return <div className="h-screen w-screen bg-black flex items-center justify-center"><div className="w-4 h-4 rounded-full bg-white animate-ping" /></div>;
+  if (!isHydrated) return <div className="h-[100dvh] w-screen bg-black flex items-center justify-center"><div className="w-4 h-4 rounded-full bg-white animate-ping" /></div>;
 
   return (
-    <div className="w-full h-screen relative bg-[#050505] text-neutral-200 overflow-hidden font-sans selection:bg-blue-500/30">
+    <div className="w-full h-[100dvh] relative bg-[#050505] text-neutral-200 overflow-hidden font-sans selection:bg-blue-500/30">
       
       <div className="film-grain" />
       <div className="crt-scanlines" />
@@ -1572,9 +1566,9 @@ export default function App() {
 
       <button 
         onClick={() => setEditorOpen(true)} 
-        className={`fixed bottom-8 right-8 z-50 p-4 bg-white/5 hover:bg-blue-500/20 backdrop-blur-xl rounded-full border border-white/10 transition-all duration-500 shadow-2xl group ${isAnyModalOpen ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}
+        className={`fixed bottom-4 right-4 md:bottom-8 md:right-8 z-50 p-3 md:p-4 bg-white/5 hover:bg-blue-500/20 backdrop-blur-xl rounded-full border border-white/10 transition-all duration-500 shadow-2xl group ${isAnyModalOpen ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}
       >
-        <Settings size={20} className="text-neutral-400 group-hover:text-blue-400 group-hover:rotate-90 transition-all duration-500" />
+        <Settings className="w-5 h-5 md:w-5 md:h-5 text-neutral-400 group-hover:text-blue-400 group-hover:rotate-90 transition-all duration-500" />
       </button>
 
       <main className="relative z-10 w-full h-full">
