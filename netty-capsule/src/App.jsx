@@ -29,7 +29,7 @@ styleTag.innerHTML = `
   .font-serif { font-family: 'Playfair Display', serif; }
   
   /* Custom Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .custom-scrollbar::-webkit-scrollbar-thumb { 
     background: rgba(255, 255, 255, 0.1); 
@@ -177,33 +177,45 @@ const deleteMediaFromDB = async (id) => {
   });
 };
 
+// Auto-Renumbering Utility
+const renumberList = (list) => {
+  return [...list].reverse().map((item, idx) => ({
+    ...item,
+    entryId: String(idx + 1).padStart(3, '0')
+  })).reverse();
+};
+
 // --- Default Content ---
 const DEFAULT_MEMORIES = [
-  { id: 'm1', date: "Autumn 2021", title: "The First Rain", content: "We sat under that yellow umbrella for three hours. The world felt quiet, just the sound of droplets and your laughter.", tags: ['happy', 'rain'], createdAt: 1600000000000 },
-  { id: 'm2', date: "Winter 2022", title: "Midnight Walk", content: "The city was asleep. You said the stars looked like spilled milk. I haven't looked at the sky the same way since.", tags: ['nostalgic'], createdAt: 1600000000001 },
+  { id: 'm_1600000000000', date: "Autumn 2021", title: "The First Rain", content: "We sat under that yellow umbrella for three hours. The world felt quiet, just the sound of droplets and your laughter.", tags: ['happy', 'rain'], createdAt: 1600000000000 },
+  { id: 'm_1600000000001', date: "Winter 2022", title: "Midnight Walk", content: "The city was asleep. You said the stars looked like spilled milk. I haven't looked at the sky the same way since.", tags: ['nostalgic'], createdAt: 1600000000001 },
 ];
 
 const DEFAULT_FRAGMENTS = [
-  { id: 'f1', caption: "Beach Day '22", rotation: -3, color: "#1a1a1a", type: 'image', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80', localId: null },
-  { id: 'f2', caption: "City Lights", rotation: 2, color: "#2d2d2d", type: 'image', url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=600&q=80', localId: null },
+  { id: 'f_1600000000000', caption: "Beach Day '22", rotation: -3, color: "#1a1a1a", type: 'image', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80', localId: null },
+  { id: 'f_1600000000001', caption: "City Lights", rotation: 2, color: "#2d2d2d", type: 'image', url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=600&q=80', localId: null },
 ];
 
 const DEFAULT_LETTERS = [
-  { id: 'l1', title: "To the version of you in my dreams", text: "I saw you at the station yesterday, or at least someone who walked exactly like you. My heart stopped for a second before I realized the hair was too short." }
+  { id: 'l_1600000000000', title: "To the version of you in my dreams", text: "I saw you at the station yesterday, or at least someone who walked exactly like you. My heart stopped for a second before I realized the hair was too short." }
 ];
 
 const DEFAULT_VAULT_ENTRIES = [
-  { id: 'v1', entryId: '001', color: 'blue', text: "We always thought we had more time. It's funny how time only feels real when it's gone." },
-  { id: 'v2', entryId: '002', color: 'blue', text: "Some people are like stars. They burn so bright that the light stays even after they leave." },
   { 
-    id: 'v3', 
-    entryId: '003', 
+    id: 'v_1700000000002', 
+    entryId: '002', 
     color: 'blue', 
     text: "A memory kept safe in the dark.", 
     mediaType: 'image', 
     mediaUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80', 
     localMediaId: null 
-  }
+  },
+  { id: 'v_1700000000001', entryId: '001', color: 'blue', text: "We always thought we had more time. It's funny how time only feels real when it's gone." },
+];
+
+const DEFAULT_CAPSULES = [
+  { id: 'c_1700000000002', entryId: '002', color: 'amber', text: "Some people are like stars. They burn so bright that the light stays even after they leave.", unlockDate: '2027-01-01T00:00' },
+  { id: 'c_1700000000001', entryId: '001', color: 'blue', text: "A message from the past, finally reaching you.", unlockDate: '2023-01-01T00:00' }
 ];
 
 const AMBIENT_TRACKS = [
@@ -227,12 +239,13 @@ const useStore = create((set, get) => ({
     const prevView = get().currentView;
     set({ currentView: view });
     
-    // Automatically lock the vault when moving away from it
-    if (view !== 'vault') {
-      if (prevView === 'vault') {
-        // Delay locking to allow the exit animation to finish smoothly without flashing the lock screen
+    // Automatically lock secure areas when navigating away
+    const isSecureView = (v) => v === 'vault';
+    
+    if (!isSecureView(view)) {
+      if (isSecureView(prevView)) {
         setTimeout(() => {
-          if (get().currentView !== 'vault') {
+          if (!isSecureView(get().currentView)) {
             set({ isVaultUnlocked: false });
           }
         }, 600);
@@ -257,6 +270,7 @@ const useStore = create((set, get) => ({
   fragments: DEFAULT_FRAGMENTS,
   letters: DEFAULT_LETTERS,
   vaultEntries: DEFAULT_VAULT_ENTRIES,
+  capsules: DEFAULT_CAPSULES,
   burnedLetters: [],
   vaultPassword: '1111',
   isVaultUnlocked: false,
@@ -278,7 +292,6 @@ const useStore = create((set, get) => ({
         set({
           memories: parsed.memories || DEFAULT_MEMORIES,
           letters: parsed.letters || DEFAULT_LETTERS,
-          vaultEntries: parsed.vaultEntries || DEFAULT_VAULT_ENTRIES,
           vaultPassword: parsed.vaultPassword || '1111',
           musicType: parsed.musicType || 'ambient',
           customMusicId: parsed.customMusicId || null,
@@ -300,7 +313,7 @@ const useStore = create((set, get) => ({
           return frag;
         }));
 
-        const hydratedVault = await Promise.all((parsed.vaultEntries || DEFAULT_VAULT_ENTRIES).map(async (v) => {
+        let hydratedVault = await Promise.all((parsed.vaultEntries || DEFAULT_VAULT_ENTRIES).map(async (v) => {
           if (v.localMediaId) {
             const localUrl = await getMediaFromDB(v.localMediaId);
             return { ...v, mediaUrl: localUrl || v.mediaUrl };
@@ -308,7 +321,19 @@ const useStore = create((set, get) => ({
           return v;
         }));
 
-        set({ fragments: hydratedFragments, vaultEntries: hydratedVault });
+        let hydratedCapsules = await Promise.all((parsed.capsules || DEFAULT_CAPSULES).map(async (c) => {
+          if (c.localMediaId) {
+            const localUrl = await getMediaFromDB(c.localMediaId);
+            return { ...c, mediaUrl: localUrl || c.mediaUrl };
+          }
+          return c;
+        }));
+
+        // Enforce numbering upon hydration
+        hydratedVault = renumberList(hydratedVault);
+        hydratedCapsules = renumberList(hydratedCapsules);
+
+        set({ fragments: hydratedFragments, vaultEntries: hydratedVault, capsules: hydratedCapsules });
       }
     } catch (e) {
       console.error("Hydration failed", e);
@@ -327,11 +352,17 @@ const useStore = create((set, get) => ({
       mediaUrl: v.localMediaId ? null : v.mediaUrl
     }));
 
+    const cleanCapsules = state.capsules.map(c => ({
+      ...c,
+      mediaUrl: c.localMediaId ? null : c.mediaUrl
+    }));
+
     const toSave = {
       memories: state.memories,
       fragments: cleanFragments,
       letters: state.letters,
       vaultEntries: cleanVault,
+      capsules: cleanCapsules,
       vaultPassword: state.vaultPassword,
       musicType: state.musicType,
       customMusicId: state.customMusicId,
@@ -378,25 +409,22 @@ const useStore = create((set, get) => ({
   updateLetter: (id, updates) => { set((s) => ({ letters: s.letters.map(l => l.id === id ? { ...l, ...updates } : l) })); get().saveState(); },
   deleteLetter: (id) => { set((s) => ({ letters: s.letters.filter(l => l.id !== id) })); get().saveState(); },
 
-  addVaultEntry: (entry) => { set((s) => ({ vaultEntries: [entry, ...s.vaultEntries] })); get().saveState(); },
-  updateVaultEntry: (id, updates) => { set((s) => ({ vaultEntries: s.vaultEntries.map(v => v.id === id ? { ...v, ...updates } : v) })); get().saveState(); },
+  addVaultEntry: (entry) => { 
+    set((s) => ({ vaultEntries: renumberList([entry, ...s.vaultEntries]) })); 
+    get().saveState(); 
+  },
+  updateVaultEntry: (id, updates) => { 
+    set((s) => ({ vaultEntries: s.vaultEntries.map(v => v.id === id ? { ...v, ...updates } : v) })); 
+    get().saveState(); 
+  },
   deleteVaultEntry: async (id) => { 
     const state = get();
     const entry = state.vaultEntries.find(v => v.id === id);
     if (entry && entry.localMediaId) {
       await deleteMediaFromDB(entry.localMediaId);
     }
-    
-    let remaining = state.vaultEntries.filter(v => v.id !== id);
-    
-    // Auto-renumber the remaining entries sequentially
-    remaining.sort((a, b) => (a.entryId || '').localeCompare(b.entryId || ''));
-    remaining = remaining.map((v, idx) => ({
-      ...v,
-      entryId: String(idx + 1).padStart(3, '0')
-    }));
-
-    set({ vaultEntries: remaining }); 
+    const remaining = state.vaultEntries.filter(v => v.id !== id);
+    set({ vaultEntries: renumberList(remaining) }); 
     get().saveState(); 
   },
 
@@ -438,6 +466,63 @@ const useStore = create((set, get) => ({
     get().saveState();
   },
 
+  addCapsule: (capsule) => { 
+    set((s) => ({ capsules: renumberList([capsule, ...s.capsules]) })); 
+    get().saveState(); 
+  },
+  updateCapsule: (id, updates) => { 
+    set((s) => ({ capsules: s.capsules.map(c => c.id === id ? { ...c, ...updates } : c) })); 
+    get().saveState(); 
+  },
+  deleteCapsule: async (id) => { 
+    const state = get();
+    const cap = state.capsules.find(c => c.id === id);
+    if (cap && cap.localMediaId) {
+      await deleteMediaFromDB(cap.localMediaId);
+    }
+    const remaining = state.capsules.filter(c => c.id !== id);
+    set({ capsules: renumberList(remaining) }); 
+    get().saveState(); 
+  },
+
+  uploadCapsuleMedia: async (id, file) => {
+    const state = get();
+    const cap = state.capsules.find(c => c.id === id);
+    if (cap && cap.localMediaId) {
+      await deleteMediaFromDB(cap.localMediaId);
+    }
+    
+    const localMediaId = `c_media_${Date.now()}`;
+    const isVideo = file.type.startsWith('video/');
+    await saveMediaToDB(localMediaId, file);
+    const url = URL.createObjectURL(file);
+    
+    set(s => ({
+      capsules: s.capsules.map(c => 
+        c.id === id 
+          ? { ...c, mediaUrl: url, localMediaId, mediaType: isVideo ? 'video' : 'image' } 
+          : c
+      )
+    }));
+    get().saveState();
+  },
+
+  removeCapsuleMedia: async (id) => {
+    const state = get();
+    const cap = state.capsules.find(c => c.id === id);
+    if (cap && cap.localMediaId) {
+      await deleteMediaFromDB(cap.localMediaId);
+    }
+    set(s => ({
+      capsules: s.capsules.map(c => 
+        c.id === id 
+          ? { ...c, mediaUrl: null, localMediaId: null, mediaType: null } 
+          : c
+      )
+    }));
+    get().saveState();
+  },
+
   uploadCustomMusic: async (file) => {
     const id = `audio_${Date.now()}`;
     await saveMediaToDB(id, file);
@@ -472,7 +557,6 @@ const CityFireworksBackground = () => {
     let moon = { x: 0, y: 0, r: 0 };
 
     const resize = () => {
-      // Use clientWidth and clientHeight to perfectly map canvas buffer to display size, preventing stretching issues
       const cw = canvas.clientWidth;
       const ch = canvas.clientHeight;
       canvas.width = cw > 0 ? cw : window.innerWidth;
@@ -696,10 +780,8 @@ const CinematicAudioPlayer = () => {
 
   return (
     <>
-      {/* Audio Engine (Decoupled from UI so it plays even when hidden) */}
       <audio ref={audioRef} src={audioSrc || undefined} loop volume={volume} muted={isMuted} />
 
-      {/* UI Player Dock */}
       <div className={`fixed bottom-4 left-4 md:bottom-8 md:left-8 z-50 flex items-center gap-2 md:gap-4 transition-all duration-500 ${isAnyModalOpen ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
         <GlassPanel className="flex items-center gap-2 md:gap-4 px-3 py-2 md:px-5 md:py-3 rounded-full hover:bg-white/[0.05] transition-colors border border-white/10 group">
           <button 
@@ -747,11 +829,12 @@ const CinematicAudioPlayer = () => {
 const Navigation = () => {
   const { currentView, setView, activeLetterModal, activeMemoryModal, activeMediaModal } = useStore();
   const navItems = [
-    { id: 'landing', label: 'Our Start' },
-    { id: 'timeline', label: 'Our Journey' },
+    { id: 'landing', label: 'Start' },
+    { id: 'timeline', label: 'Journey' },
     { id: 'gallery', label: 'Moments' },
-    { id: 'letters', label: 'Love Letters' },
-    { id: 'vault', label: 'The Vault' }
+    { id: 'letters', label: 'Letters' },
+    { id: 'capsules', label: 'Capsules' },
+    { id: 'vault', label: 'Vault' }
   ];
 
   const isAnyModalOpen = activeLetterModal || activeMemoryModal || activeMediaModal;
@@ -762,14 +845,14 @@ const Navigation = () => {
     <motion.nav 
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed top-8 left-1/2 -translate-x-1/2 z-50"
+      className="fixed top-8 left-1/2 -translate-x-1/2 z-50 max-w-[95vw]"
     >
-      <GlassPanel className="flex gap-2 md:gap-6 px-6 py-3 rounded-full text-[10px] md:text-xs uppercase tracking-[0.2em]">
+      <GlassPanel className="flex gap-1 md:gap-6 px-2 md:px-6 py-2 md:py-3 rounded-full text-[8px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] overflow-x-auto custom-scrollbar whitespace-nowrap items-center">
         {navItems.map(item => (
           <button 
             key={item.id}
             onClick={() => setView(item.id)} 
-            className={`relative px-3 py-1 transition-colors ${currentView === item.id ? 'text-blue-400' : 'text-neutral-500 hover:text-neutral-300'}`}
+            className={`relative px-2 md:px-3 py-1 transition-colors ${currentView === item.id ? 'text-blue-400 font-bold' : 'text-neutral-500 hover:text-neutral-300'}`}
           >
             {item.label}
             {currentView === item.id && (
@@ -1023,8 +1106,17 @@ const LettersView = () => {
   );
 };
 
-const VaultView = () => {
-  const { isVaultUnlocked, vaultPassword, vaultEntries, unlockVault, lockVault, setActiveMediaModal } = useStore();
+// Vault Global Settings
+const vaultColors = {
+  emerald: { border: 'border-l-emerald-500/30', text: 'text-emerald-500/60' },
+  purple: { border: 'border-l-purple-500/30', text: 'text-purple-500/60' },
+  blue: { border: 'border-l-blue-500/30', text: 'text-blue-500/60' },
+  rose: { border: 'border-l-rose-500/30', text: 'text-rose-500/60' },
+  amber: { border: 'border-l-amber-500/30', text: 'text-amber-500/60' }
+};
+
+const VaultAuthScreen = () => {
+  const { vaultPassword, unlockVault } = useStore();
   const [input, setInput] = useState('');
   const [error, setError] = useState(false);
 
@@ -1044,43 +1136,180 @@ const VaultView = () => {
     }
   };
 
-  const vaultColors = {
-    emerald: { border: 'border-l-emerald-500/30', text: 'text-emerald-500/60' },
-    purple: { border: 'border-l-purple-500/30', text: 'text-purple-500/60' },
-    blue: { border: 'border-l-blue-500/30', text: 'text-blue-500/60' },
-    rose: { border: 'border-l-rose-500/30', text: 'text-rose-500/60' },
-    amber: { border: 'border-l-amber-500/30', text: 'text-amber-500/60' }
-  };
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full flex items-center justify-center relative z-10">
+      <GlassPanel className={`text-center p-12 border ${error ? 'border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.2)]' : 'border-white/5'} rounded-3xl w-96 transition-all duration-300 ${error ? 'animate-shake' : ''}`}>
+        <div className="mb-8 relative inline-block">
+           <Lock className={`transition-colors ${error ? 'text-red-500' : 'text-neutral-500'}`} size={48} />
+           {error && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 text-red-500 blur-md"><Lock size={48} /></motion.div>}
+        </div>
+        
+        <input 
+          type="password" 
+          maxLength={vaultPassword.length} 
+          value={input} 
+          onChange={handleInput} 
+          autoFocus
+          className="w-full bg-transparent border-b-2 border-neutral-700 focus:border-neutral-300 text-center text-4xl tracking-[0.5em] focus:outline-none mb-6 text-white font-mono placeholder:text-neutral-800 transition-colors" 
+          placeholder="••••"
+        />
+        <p className={`text-[10px] uppercase tracking-[0.3em] font-bold ${error ? 'text-red-500' : 'text-neutral-500'}`}>
+          {error ? <span className="glitch-text" data-text="HEART NOT RECOGNIZED">HEART NOT RECOGNIZED</span> : 'SEALED ARCHIVE'}
+        </p>
+      </GlassPanel>
+    </motion.div>
+  );
+};
+
+// Extracts only countdowns into isolated cards for Time Capsule View
+const TimeCapsuleCard = ({ v, theme, onUnlock }) => {
+  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const target = new Date(v.unlockDate).getTime();
+      const now = new Date().getTime();
+      const distance = target - now;
+
+      if (distance <= 0) {
+        clearInterval(interval);
+        onUnlock && onUnlock();
+      } else {
+        setTimeLeft({
+          d: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          h: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          m: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          s: Math.floor((distance % (1000 * 60)) / 1000)
+        });
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [v.unlockDate, onUnlock]);
+
+  return (
+    <GlassPanel className={`p-10 rounded-2xl border-l-4 ${theme.border} flex flex-col justify-center min-h-[250px] relative overflow-hidden group`}>
+       <div className="absolute top-0 right-0 p-4 opacity-10 font-mono text-4xl">{v.entryId}</div>
+       
+       <div className="flex items-center gap-2 mb-4 z-10">
+         <p className={`text-xs uppercase tracking-[0.2em] ${theme.text} font-mono`}>Capsule.{v.entryId}</p>
+       </div>
+       
+       <div className="flex flex-col items-center justify-center py-8 z-10 flex-1">
+         <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.7, 0.3] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}>
+            <Lock size={40} className="text-white/20 mb-6" />
+         </motion.div>
+         <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 mb-6">Capsule Sealed</p>
+         
+         <div className="flex gap-4 md:gap-6 text-center">
+           {[
+             { label: 'Days', val: timeLeft.d },
+             { label: 'Hrs', val: timeLeft.h },
+             { label: 'Min', val: timeLeft.m },
+             { label: 'Sec', val: timeLeft.s }
+           ].map((timeUnit, i) => (
+             <div key={i} className="flex flex-col items-center gap-1">
+               <span className="text-xl md:text-3xl font-mono text-white/80">{String(timeUnit.val).padStart(2, '0')}</span>
+               <span className="text-[8px] uppercase tracking-widest text-white/30">{timeUnit.label}</span>
+             </div>
+           ))}
+         </div>
+       </div>
+    </GlassPanel>
+  );
+};
+
+// Extracts standard unlocked content into isolated cards for Vault View
+const VaultEntryCard = ({ v, theme, setActiveMediaModal, isCapsule = false }) => {
+  return (
+    <GlassPanel className={`p-10 rounded-2xl border-l-4 ${theme.border} flex flex-col justify-center min-h-[250px] relative overflow-hidden group`}>
+       <div className="absolute top-0 right-0 p-4 opacity-10 font-mono text-4xl">{v.entryId}</div>
+       
+       <div className="flex items-center gap-2 mb-4 z-10">
+         <p className={`text-xs uppercase tracking-[0.2em] ${theme.text} font-mono`}>
+           {isCapsule ? 'Capsule.' : 'Entry.'}{v.entryId}
+         </p>
+         {isCapsule && <Unlock size={12} className={theme.text} />}
+       </div>
+       
+       {v.mediaUrl && (
+         <div 
+           className="mb-6 rounded-xl overflow-hidden relative z-10 border border-white/5 shadow-xl bg-black/40 w-full cursor-pointer group/vmedia"
+           onClick={() => setActiveMediaModal({ type: v.mediaType, url: v.mediaUrl, caption: v.text })}
+         >
+           {v.mediaType === 'video' ? (
+             <video 
+               src={v.mediaUrl} 
+               className="w-full max-h-64 object-cover" 
+               muted loop playsInline
+               onMouseEnter={(e) => e.target.play()}
+               onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+             />
+           ) : (
+             <img src={v.mediaUrl} className="w-full max-h-64 object-cover transition-transform duration-700 group-hover/vmedia:scale-105" />
+           )}
+           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/vmedia:opacity-100 bg-black/30 transition-all duration-300 pointer-events-none">
+             <Maximize2 className="text-white drop-shadow-md" size={32} />
+           </div>
+         </div>
+       )}
+
+       {v.text?.trim() && (
+         <p className="italic text-neutral-300 leading-relaxed font-serif text-lg z-10">"{v.text}"</p>
+       )}
+    </GlassPanel>
+  );
+};
+
+const CapsulesView = () => {
+  const { capsules, setActiveMediaModal } = useStore();
+  const [now, setNow] = useState(Date.now());
+
+  const sortedCapsules = [...capsules].sort((a, b) => (b.entryId || '').localeCompare(a.entryId || ''));
+
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="h-full p-8 md:px-16 pt-32 md:pt-40 pb-32 overflow-y-auto custom-scrollbar relative z-10">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-end mb-16 border-b border-white/10 pb-8">
+          <div>
+            <h2 className="text-4xl md:text-5xl font-light tracking-tighter mb-2 flex items-center gap-4">
+              <Clock className="text-amber-500/70" /> Time Capsules
+            </h2>
+            <p className="text-xs uppercase tracking-widest text-amber-500/50">Memories waiting for tomorrow</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {sortedCapsules.length === 0 ? (
+             <div className="col-span-full py-12 text-center text-neutral-500 italic font-serif flex flex-col items-center">
+               <Sparkles className="text-neutral-700 mb-4" size={32} />
+               There are no sealed capsules right now.
+             </div>
+          ) : (
+            sortedCapsules.map(c => {
+              const theme = vaultColors[c.color] || vaultColors.amber;
+              const isLocked = c.unlockDate && new Date(c.unlockDate).getTime() > Date.now();
+              
+              if (isLocked) {
+                return <TimeCapsuleCard key={c.id} v={c} theme={theme} onUnlock={() => setNow(Date.now())} />;
+              } else {
+                return <VaultEntryCard key={c.id} v={c} theme={theme} isCapsule={true} setActiveMediaModal={setActiveMediaModal} />;
+              }
+            })
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const VaultView = () => {
+  const { isVaultUnlocked, vaultEntries, lockVault, setActiveMediaModal } = useStore();
+
+  if (!isVaultUnlocked) return <VaultAuthScreen />;
 
   const sortedVaultEntries = [...vaultEntries].sort((a, b) => 
     (b.entryId || '').localeCompare(a.entryId || '')
   );
-
-  if (!isVaultUnlocked) {
-    return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full flex items-center justify-center relative z-10">
-        <GlassPanel className={`text-center p-12 border ${error ? 'border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.2)]' : 'border-white/5'} rounded-3xl w-96 transition-all duration-300 ${error ? 'animate-shake' : ''}`}>
-          <div className="mb-8 relative inline-block">
-             <Lock className={`transition-colors ${error ? 'text-red-500' : 'text-neutral-500'}`} size={48} />
-             {error && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 text-red-500 blur-md"><Lock size={48} /></motion.div>}
-          </div>
-          
-          <input 
-            type="password" 
-            maxLength={vaultPassword.length} 
-            value={input} 
-            onChange={handleInput} 
-            autoFocus
-            className="w-full bg-transparent border-b-2 border-neutral-700 focus:border-neutral-300 text-center text-4xl tracking-[0.5em] focus:outline-none mb-6 text-white font-mono placeholder:text-neutral-800 transition-colors" 
-            placeholder="••••"
-          />
-          <p className={`text-[10px] uppercase tracking-[0.3em] font-bold ${error ? 'text-red-500' : 'text-neutral-500'}`}>
-            {error ? <span className="glitch-text" data-text="HEART NOT RECOGNIZED">HEART NOT RECOGNIZED</span> : 'SEALED ARCHIVE'}
-          </p>
-        </GlassPanel>
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="h-full p-8 md:px-16 pt-32 md:pt-40 pb-32 overflow-y-auto custom-scrollbar relative z-10">
@@ -1093,50 +1322,19 @@ const VaultView = () => {
             <p className="text-xs uppercase tracking-widest text-blue-500/50">Welcome to our deepest memories</p>
           </div>
           <button onClick={lockVault} className="text-[10px] bg-white/5 hover:bg-white/10 px-4 py-2 rounded uppercase tracking-widest transition-colors flex items-center gap-2 border border-white/5">
-            <Lock size={12}/> Seal Vault
+            <Lock size={12}/> Seal Archive
           </button>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           {sortedVaultEntries.length === 0 ? (
-             <div className="col-span-full py-12 text-center text-neutral-500 italic font-serif">
+             <div className="col-span-full py-12 text-center text-neutral-500 italic font-serif flex flex-col items-center">
                The vault is currently empty.
              </div>
           ) : (
             sortedVaultEntries.map(v => {
               const theme = vaultColors[v.color] || vaultColors.blue;
-              return (
-                <GlassPanel key={v.id} className={`p-10 rounded-2xl border-l-4 ${theme.border} flex flex-col justify-center min-h-[250px] relative overflow-hidden group`}>
-                   <div className="absolute top-0 right-0 p-4 opacity-10 font-mono text-4xl">{v.entryId}</div>
-                   <p className={`text-xs uppercase tracking-[0.2em] ${theme.text} mb-4 font-mono z-10`}>Entry.{v.entryId}</p>
-                   
-                   {v.mediaUrl && (
-                     <div 
-                       className="mb-6 rounded-xl overflow-hidden relative z-10 border border-white/5 shadow-xl bg-black/40 w-full cursor-pointer group/vmedia"
-                       onClick={() => setActiveMediaModal({ type: v.mediaType, url: v.mediaUrl, caption: v.text })}
-                     >
-                       {v.mediaType === 'video' ? (
-                         <video 
-                           src={v.mediaUrl} 
-                           className="w-full max-h-64 object-cover" 
-                           muted loop playsInline
-                           onMouseEnter={(e) => e.target.play()}
-                           onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
-                         />
-                       ) : (
-                         <img src={v.mediaUrl} className="w-full max-h-64 object-cover transition-transform duration-700 group-hover/vmedia:scale-105" />
-                       )}
-                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/vmedia:opacity-100 bg-black/30 transition-all duration-300 pointer-events-none">
-                         <Maximize2 className="text-white drop-shadow-md" size={32} />
-                       </div>
-                     </div>
-                   )}
-
-                   {v.text?.trim() && (
-                     <p className="italic text-neutral-300 leading-relaxed font-serif text-lg z-10">"{v.text}"</p>
-                   )}
-                </GlassPanel>
-              )
+              return <VaultEntryCard key={v.id} v={v} theme={theme} isCapsule={false} setActiveMediaModal={setActiveMediaModal} />;
             })
           )}
         </div>
@@ -1207,9 +1405,11 @@ const MediaModal = () => {
 
 const EditorModal = () => {
   const { 
-    isEditorOpen, setEditorOpen, memories, fragments, letters, vaultEntries, burnedLetters, vaultPassword, musicType, customMusicUrl, currentAmbient,
+    isEditorOpen, setEditorOpen, memories, fragments, letters, vaultEntries, capsules, burnedLetters, vaultPassword, musicType, customMusicUrl, currentAmbient,
     updateMemory, deleteMemory, addMemory, addFragment, updateFragment, deleteFragment, addLetter, updateLetter, deleteLetter,
-    addVaultEntry, updateVaultEntry, deleteVaultEntry, uploadVaultMedia, removeVaultMedia, setMusicConfig, uploadCustomMusic, saveState
+    addVaultEntry, updateVaultEntry, deleteVaultEntry, uploadVaultMedia, removeVaultMedia,
+    addCapsule, updateCapsule, deleteCapsule, uploadCapsuleMedia, removeCapsuleMedia,
+    setMusicConfig, uploadCustomMusic, saveState
   } = useStore();
   
   const [activeTab, setActiveTab] = useState('memories');
@@ -1227,7 +1427,7 @@ const EditorModal = () => {
       }, 150); 
       setFocusedItemId(null);
     }
-  }, [memories, letters, vaultEntries, focusedItemId]);
+  }, [memories, letters, vaultEntries, capsules, focusedItemId]);
 
   if (!isEditorOpen) return null;
 
@@ -1260,7 +1460,7 @@ const EditorModal = () => {
 
           <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
             <div className="w-full md:w-56 border-r border-white/5 p-4 flex md:flex-col gap-2 bg-black/10 overflow-x-auto md:overflow-y-auto custom-scrollbar">
-              {['memories', 'fragments', 'letters', 'vault', 'system', 'credits'].map(tab => (
+              {['memories', 'fragments', 'letters', 'capsules', 'vault', 'system', 'credits'].map(tab => (
                 <button 
                   key={tab} 
                   onClick={() => setActiveTab(tab)}
@@ -1359,6 +1559,89 @@ const EditorModal = () => {
                 </div>
               )}
 
+              {activeTab === 'capsules' && (
+                <div className="space-y-12">
+                  <div className="space-y-6">
+                    <h4 className="text-xs uppercase tracking-widest text-amber-400 mb-6 flex items-center gap-2"><Clock size={16} /> Time Capsule Settings</h4>
+                    
+                    <button onClick={() => {
+                      const newId = `c_${Date.now()}`;
+                      // Create a default date for tomorrow
+                      const tmrw = new Date();
+                      tmrw.setDate(tmrw.getDate() + 1);
+                      const defaultDate = tmrw.toISOString().slice(0,16);
+                      
+                      addCapsule({ id: newId, color: 'amber', text: "A message for the future...", unlockDate: defaultDate });
+                      setFocusedItemId(newId);
+                    }} className="w-full py-6 border-2 border-dashed border-amber-500/20 text-neutral-500 hover:text-amber-400 hover:border-amber-500/40 flex items-center justify-center gap-2 rounded-2xl transition-all"><Plus size={18} /> Seal New Capsule</button>
+
+                    <AnimatePresence mode="popLayout">
+                      {capsules.map(c => (
+                        <motion.div layout initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3 }} key={c.id} className="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4 group relative">
+                          <button onClick={() => deleteCapsule(c.id)} className="absolute top-4 right-4 md:top-6 md:right-6 opacity-100 md:opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-all z-20"><Trash2 size={18}/></button>
+                          
+                          <div className="flex flex-wrap gap-4 items-center w-full md:w-[85%] pr-10 mb-4">
+                            <div className="bg-white/5 px-4 py-2 rounded-lg text-xs text-amber-400 uppercase tracking-widest font-mono border border-white/10 shadow-inner" ref={el => itemRefs.current[c.id] = el}>
+                              CAPSULE.{c.entryId}
+                            </div>
+                            
+                            <div className="flex items-center gap-2 border-b border-white/10 pb-1 focus-within:border-amber-500/50 relative">
+                               <Clock size={12} className="text-neutral-500" />
+                               <input
+                                 type="datetime-local"
+                                 value={c.unlockDate || ''}
+                                 onChange={e => updateCapsule(c.id, { unlockDate: e.target.value })}
+                                 className="bg-transparent text-xs text-neutral-300 outline-none font-mono placeholder:text-neutral-600 appearance-none cursor-pointer"
+                                 style={{ colorScheme: 'dark' }}
+                               />
+                            </div>
+                            
+                            <div className="text-[9px] uppercase tracking-widest flex items-center gap-1 opacity-80">
+                              {c.unlockDate && new Date(c.unlockDate) > new Date() ? (
+                                <span className="text-amber-400 flex items-center gap-1"><Lock size={10}/> Locked</span>
+                              ) : (
+                                <span className="text-blue-400 flex items-center gap-1"><Unlock size={10}/> Unlocked</span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col md:flex-row gap-4 items-start w-full">
+                            {c.mediaUrl ? (
+                              <div className="relative w-full md:w-40 h-28 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 group/media bg-black/50">
+                                {c.mediaType === 'video' ? (
+                                  <video src={c.mediaUrl} className="w-full h-full object-cover opacity-80" />
+                                ) : (
+                                  <img src={c.mediaUrl} className="w-full h-full object-cover opacity-80" />
+                                )}
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center">
+                                   <button onClick={() => removeCapsuleMedia(c.id)} className="text-red-400 hover:text-red-300 p-2 bg-red-500/10 rounded-full transition-colors"><Trash2 size={16}/></button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0 w-full md:w-40 h-28">
+                                <input type="file" id={`cfile-${c.id}`} className="hidden" accept="image/*,video/*" onChange={e => {
+                                   if(e.target.files?.[0]) uploadCapsuleMedia(c.id, e.target.files[0]);
+                                }}/>
+                                <button onClick={() => document.getElementById(`cfile-${c.id}`).click()} className="flex flex-col items-center justify-center h-full w-full rounded-lg border border-dashed border-white/20 text-neutral-500 hover:text-amber-400 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all text-[10px] uppercase tracking-widest gap-2">
+                                  <ImageIcon size={20} /> Attach Media
+                                </button>
+                              </div>
+                            )}
+                            
+                            <textarea 
+                              value={c.text} 
+                              onChange={e => updateCapsule(c.id, { text: e.target.value })} 
+                              className="bg-black/40 w-full flex-1 p-3 rounded-lg text-lg h-28 border border-white/5 text-neutral-200 focus:border-amber-500/50 outline-none resize-none font-serif italic custom-scrollbar" 
+                              placeholder="Message for the future..." 
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'vault' && (
                 <div className="space-y-12">
                   <div className="space-y-6">
@@ -1366,24 +1649,19 @@ const EditorModal = () => {
                     
                     <button onClick={() => {
                       const newId = `v_${Date.now()}`;
-                      const num = String(vaultEntries.length + 1).padStart(3, '0');
-                      addVaultEntry({ id: newId, entryId: num, color: 'blue', text: "A new hidden thought..." });
+                      addVaultEntry({ id: newId, color: 'blue', text: "A new hidden thought..." });
                       setFocusedItemId(newId);
                     }} className="w-full py-6 border-2 border-dashed border-blue-500/20 text-neutral-500 hover:text-blue-400 hover:border-blue-500/40 flex items-center justify-center gap-2 rounded-2xl transition-all"><Plus size={18} /> New Vault Entry</button>
 
                     <AnimatePresence mode="popLayout">
-                      {[...vaultEntries].sort((a, b) => (b.entryId || '').localeCompare(a.entryId || '')).map(v => (
+                      {vaultEntries.map(v => (
                         <motion.div layout initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3 }} key={v.id} className="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4 group relative">
                           <button onClick={() => deleteVaultEntry(v.id)} className="absolute top-4 right-4 md:top-6 md:right-6 opacity-100 md:opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-all z-20"><Trash2 size={18}/></button>
                           
-                          <div className="flex gap-4 items-center w-full md:w-[85%] pr-10">
-                            <input 
-                              ref={el => itemRefs.current[v.id] = el} 
-                              value={v.entryId} 
-                              onChange={e => updateVaultEntry(v.id, { entryId: e.target.value })} 
-                              className="bg-transparent text-xs text-blue-400 uppercase tracking-widest border-b border-white/10 outline-none w-24 font-mono pb-1 focus:border-blue-500/50" 
-                              placeholder="ID (001)" 
-                            />
+                          <div className="flex flex-wrap gap-4 items-center w-full md:w-[85%] pr-10 mb-4">
+                            <div className="bg-white/5 px-4 py-2 rounded-lg text-xs text-blue-400 uppercase tracking-widest font-mono border border-white/10 shadow-inner" ref={el => itemRefs.current[v.id] = el}>
+                              ENTRY.{v.entryId}
+                            </div>
                           </div>
                           
                           <div className="flex flex-col md:flex-row gap-4 items-start w-full">
@@ -1577,6 +1855,7 @@ export default function App() {
           {currentView === 'timeline' && <TimelineView key="timeline" />}
           {currentView === 'gallery' && <GalleryView key="gallery" />}
           {currentView === 'letters' && <LettersView key="letters" />}
+          {currentView === 'capsules' && <CapsulesView key="capsules" />}
           {currentView === 'vault' && <VaultView key="vault" />}
         </AnimatePresence>
       </main>
